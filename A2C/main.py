@@ -13,7 +13,7 @@ import math
 #import pickle
 import os
 
-ROLLOUTS_PER_BATCH = 1
+ROLLOUTS_PER_BATCH = 10
 batch = []
 
 class World():
@@ -148,7 +148,7 @@ def train(world, filename):
         states, hns, cns, actions, rewards, gae = unroll_rollouts(gmodel, full_rollouts)
         gmodel.gamma = 0.5+1/2./(1+math.exp(-0.0003*(i-20000))) # adaptive gamma
         l, pl, vl = gmodel_train(gmodel, states, hns, cns, actions, rewards, gae)
-        rr = rr * 0.99 + np.mean(last_rewards)/ROLLOUTS_PER_BATCH * 0.01
+        rr = rr * 0.99 + np.mean(last_rewards) * 0.01
         ii+=len(actions)
         print(i, "\t", round(gmodel.gamma, 3), round(rr,3), "\twins:", last_rewards.count(1), Counter(actions), round(sum(rewards),3), round(l,3), round(pl,3), round(vl,3))
         with open("training.txt", "a") as f:
@@ -174,7 +174,7 @@ def eval(world, filename, init_gmodel = False):
     env = world.env
     model = world.model
     leif = world.leif
-    leif.debug = True
+    leif.debug = False
     leif.stochastic = False
 
     do_print = True
@@ -198,7 +198,7 @@ def eval(world, filename, init_gmodel = False):
                 print("\nLast reward: ", last_reward, "Time", t)
 
             action = env.act(state)
-            print("\naction: ", action)
+            
             state, reward, done, info = env.step(action)
             if reward[0] == -1: 
                 last_reward = reward
@@ -218,5 +218,4 @@ if len(sys.argv) > 2:
     filename = sys.argv[2]
 else:
     filename = "convrnn-s.weights"
-print(filename)
 locals()[entrypoint](World(), filename)

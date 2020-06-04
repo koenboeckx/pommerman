@@ -29,8 +29,8 @@ class World():
             self.leif, 
             #self.stoner
             agents.SimpleAgent(), 
-            agents.SimpleAgent(), 
-            agents.SimpleAgent()
+            #agents.SimpleAgent(), 
+            #agents.SimpleAgent()
         ]
         self.env = normal_env(self.agent_list) #naked_env
         fmt = {
@@ -129,7 +129,7 @@ def unroll_rollouts(gmodel, list_of_full_rollouts):
     
     return states, hns, cns, actions, rewards, gae
 
-def train(world):
+def train(world, filename):
     model, gmodel = world.model, world.gmodel
     leif, env     = world.leif, world.env
     
@@ -151,9 +151,10 @@ def train(world):
         rr = rr * 0.99 + np.mean(last_rewards)/ROLLOUTS_PER_BATCH * 0.01
         ii+=len(actions)
         print(i, "\t", round(gmodel.gamma, 3), round(rr,3), "\twins:", last_rewards.count(1), Counter(actions), round(sum(rewards),3), round(l,3), round(pl,3), round(vl,3))
-        with open("training.txt", "a") as f: print(rr, "\t", round(gmodel.gamma,4), "\t", round(vl,3),"\t", round(pl,3),"\t", round(l,3), file=f)
+        with open("training.txt", "a") as f:
+            print(rr, "\t", round(gmodel.gamma,4), "\t", round(vl,3),"\t", round(pl,3),"\t", round(l,3), file=f)
         model.load_state_dict(gmodel.state_dict())
-        if i >= 10 and i % 300 == 0: torch.save(gmodel.state_dict(), "convrnn-s.weights") 
+        if i >= 10 and i % 300 == 0: torch.save(gmodel.state_dict(), filename) 
 
 def run(world):
     done, ded, state, _ = False, False, world.env.reset(), world.leif.clear()
@@ -169,7 +170,7 @@ def run(world):
     world.env.close()    
     return None
 
-def eval(world, init_gmodel = False):
+def eval(world, filename, init_gmodel = False):
     env = world.env
     model = world.model
     leif = world.leif
@@ -182,7 +183,7 @@ def eval(world, init_gmodel = False):
     last_reward = [0,0,0,0]
     
     while True:
-        model.load_state_dict(torch.load("convrnn-s.weights", map_location='cpu'))
+        model.load_state_dict(torch.load(filename, map_location='cpu'))
 
         done, state, _ = False, env.reset(), leif.clear()
         t = 0
@@ -197,13 +198,14 @@ def eval(world, init_gmodel = False):
                 print("\nLast reward: ", last_reward, "Time", t)
 
             action = env.act(state)
+            print("\naction: ", action)
             state, reward, done, info = env.step(action)
             if reward[0] == -1: 
                 last_reward = reward
                 break
             t+=1
 
-def readme(world):
+def readme(*args):
     print("Usage: ")
     print("\t to train:\tpython main.py train")
     print("\t to evaluate:\tpython main.py eval\n\n")
@@ -212,4 +214,9 @@ def readme(world):
     return None
 
 entrypoint = next(iter(sys.argv[1:]), "readme")
-locals()[entrypoint](World())
+if len(sys.argv) > 2:
+    filename = sys.argv[2]
+else:
+    filename = "convrnn-s.weights"
+print(filename)
+locals()[entrypoint](World(), filename)

@@ -3,5 +3,4 @@ __pycache__/
 *$py.class
 convrnn-s.weights
 training.txt
-*.weights
-A2C/test01.weights
+A2C/*.weights

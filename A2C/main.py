@@ -13,7 +13,7 @@ import math
 #import pickle
 import os
 
-ROLLOUTS_PER_BATCH = 10
+ROLLOUTS_PER_BATCH = 3
 batch = []
 
 class World():
@@ -64,11 +64,11 @@ def do_rollout(env, leif, do_print = False):
             
         action = env.act(state)
         state, reward, done, info = env.step(action)
-        if reward[0] == -1: done = True
+        if reward[0] == -1: done = True # TODO: why only @ -1?
         rewards.append(reward[0])
         dones.append(done)
     
-    hidden = hidden[:-1].copy()
+    hidden = hidden[:-1].copy() # TODO: why this?
     hns, cns = [], []
     for hns_cns_tuple in hidden:
         hns.append(hns_cns_tuple[0])
@@ -218,4 +218,5 @@ if len(sys.argv) > 2:
     filename = sys.argv[2]
 else:
     filename = "convrnn-s.weights"
-locals()[entrypoint](World(), filename)
+#locals()[entrypoint](World(), filename)
+train(World(), filename)
